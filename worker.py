@@ -3,7 +3,7 @@ import os
 import asyncio
 from asyncio import sleep
 from datetime import datetime, timedelta
-from database import insert_volume
+from database import insert_volume, check_db
 
 
 # SQLite DB
@@ -13,7 +13,7 @@ WEIGHTS = [5, 19, 26]
 # Вкл/Отк отрисовки данных на стандартный вывод
 RENDER = True
 # Интервал перерисовки данных
-RENDER_INTERVAL = 10
+RENDER_INTERVAL = 30
 
 
 async def main():
@@ -33,4 +33,6 @@ async def main():
 
 
 if __name__ == '__main__':
+    # Проверка базы данных
+    check_db(DB)
     asyncio.run(main())

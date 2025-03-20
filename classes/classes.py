@@ -1,6 +1,7 @@
 import aiohttp
 from datetime import datetime, timedelta
 from tabulate import tabulate
+from random import randint
 
 
 
@@ -50,7 +51,7 @@ class Volume2():
                 self.count_rockets()
                 self.get_coefficient()
                 self.clear_old_data()
-                self.next_get = self.last_time + timedelta(seconds=self.timeout)
+                self.next_get = self.last_time + timedelta(seconds=(self.timeout + randint(1, 3)))
         except aiohttp.ClientError as e:
             print(e)
 
@@ -107,12 +108,6 @@ class Volume2():
                  ('Rockets', self.last_rockets, self.get_sum_rockets(timedelta(minutes=10)), self.get_sum_rockets(timedelta(minutes=60)), self.get_sum_rockets(timedelta(days=1))),
                  ('Coefficient', '---', self.coefficient["ten_min"], self.coefficient["one_hour"], self.coefficient["one_day"])
                  ]
-
-        # repr_data = f'Vol: {self.volume}\n'\
-        #             f'Added 10 min: {self.get_sum_new_lots(timedelta(minutes=10))} | 1 hour: {self.get_sum_new_lots(timedelta(minutes=60))} | 1 day: {self.get_sum_new_lots(timedelta(days=1))} | Last {self.last_new_lots}\n'\
-        #             f'Sold 10 min: {self.get_sum_sold_lots(timedelta(minutes=10))} | 1 hour: {self.get_sum_sold_lots(timedelta(minutes=60))} | 1 day: {self.get_sum_sold_lots(timedelta(days=1))} | Last {self.last_sold_lots}\n'\
-        #             f'Rockets 10 min: {self.get_sum_rockets(timedelta(minutes=10))} | 1 hour: {self.get_sum_rockets(timedelta(minutes=60))} | 1 day: {self.get_sum_rockets(timedelta(days=1))} | Last {self.last_rockets}\n'\
-        #             f'Coef 10 min: {self.coefficient["ten_min"]} | 1 hour: {self.coefficient["one_hour"]} | 1 day: {self.coefficient["one_day"]}'
         return tabulate(lines, headers=header) + '\n'
 
     def get_sum_new_lots(self, t: timedelta):
