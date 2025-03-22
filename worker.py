@@ -9,11 +9,12 @@ from database import insert_volume, check_db
 # SQLite DB
 DB = 'worker.db'
 # Список какие значения забирать
-WEIGHTS = [5, 19, 26]
+WEIGHTS = [3, ]
+        #    , 5, 10, 19, 26]
 # Вкл/Отк отрисовки данных на стандартный вывод
 RENDER = True
 # Интервал перерисовки данных
-RENDER_INTERVAL = 30
+RENDER_INTERVAL = 2
 
 
 async def main():
@@ -24,12 +25,14 @@ async def main():
         for v in volumes:
             if v.next_get <= datetime.now():
                 await v.get_volume()
-                await insert_volume(DB, v)
+                # await insert_volume(DB, v)
         if RENDER and render_last < datetime.now() - timedelta(seconds=RENDER_INTERVAL):
             os.system('clear')
             render_last = datetime.now()
             for sh_vol in volumes:
                 print(sh_vol)
+                print(sh_vol.create_table_compare())
+
 
 
 if __name__ == '__main__':
