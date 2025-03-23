@@ -10,10 +10,11 @@ class Volume2():
     Class for aiohttp
     '''
     def __init__(self, volume: int, price: int = 15,
-                 offset: int = 0, limit:int = 250,
-                 timeout: int = 5, region: str = 'perm',
+                 offset: int = 0, limit:int = 150,
+                 timeout: int = 2, region: str = 'perm',
                  url: str = '.t2.ru/api/exchange/lots?',
-                 headers={'User-agent': 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)'}):
+                 headers={'User-agent': 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)'},
+                 wide_view: bool = False):
         self.volume = volume
         self.region = region
         self.url = f'https://{region}{url}'
@@ -24,14 +25,17 @@ class Volume2():
                        'limit': limit}
         self.headers: dict = headers
         self.timeout = timeout
+        self.wide_view = wide_view
         self.next_get = datetime.now()
-        self.cnt_added_lots: dict = {}
-        self.cnt_sold_lots: dict = {}
-        self.cnt_rockets: dict = {}
-        self.last_new_lots: list = []
-        self.last_sold_lots: list = []
-        self.last_rockets: list = []
-        self.last_block: int = 0
+        self.cnt_added_lots: dict = {}      # Словарь с добваленными лотами
+        self.cnt_sold_lots: dict = {}       # Словарь с проданными лотами
+        self.cnt_rockets: dict = {}         # Словарь с ракетами
+        self.cnt_anomaly_lots: dict = {}    # Словарь с аномальными лотами
+        self.last_new_lots: list = []       # Новые лоты
+        self.last_sold_lots: list = []      # Проданные лоты
+        self.last_rockets: list = []        # Лоты - ракеты
+        self.last_anomaly_lots: list = []   # Аномальные лоты (внутри объема)
+        self.last_block: int = 0            # Количество доб. лотов и ракет
         self.last_time = datetime.now()
         self.new_lots: list = None
         self.prev_lots: list = None
@@ -48,60 +52,40 @@ class Volume2():
                 self.new_lots = tuple(lot for lot in data['data'])
                 self.last_time = datetime.now()
                 self.count_new_lots()
-                # self.count_rockets()
                 self.count_sold_lots()
+                self.count_anomaly_lots()
                 self.get_coefficient()
                 self.clear_old_data()
-                # self.next_get = self.last_time + timedelta(seconds=(self.timeout + randint(1, 3)))
-                self.next_get = self.last_time + timedelta(seconds=(self.timeout))
+                self.next_get = self.last_time + timedelta(seconds=(self.timeout), milliseconds=(randint(300, 800)))
         except aiohttp.ClientError as e:
             print(e)
 
     def count_new_lots(self):
         if self.prev_lots and self.new_lots:
+            crop_index = 0
             self.last_new_lots = []
             self.last_rockets = []
+            self.last_anomaly_lots = []
             nl = [i['id'] for i in self.new_lots]
             pl = [i['id'] for i in self.prev_lots]
-
-            # Ищем индекс до которого навалили ракеты и новые лоты
-            # Поэлементно ищем первый или последующий лот в новом массиве
             for i in pl:
                 if i in nl:
                     crop_index = nl.index(i)
-                    pl = pl[:-crop_index]
+                    # pl = pl[:-crop_index]
                     break
-            
-            # Если в этой пачке есть объекты из старого массива,
-            # объявляем их ракетами, иначе новыми лотами
-            for i in nl[:crop_index]:
-                if i not in pl:
-                    self.last_new_lots.append(i)
-                else:
-                    self.last_rockets.append(i)
 
-            # for lot in nl:
-            #     if lot not in pl:
-            #         self.last_new_lots.append(lot)
-            #     else:
-            #         break
+            if crop_index:
+                for n in nl[:crop_index]:
+                    if n not in pl:
+                        self.last_new_lots.append(n)
+                    else:
+                        self.last_rockets.append(n)
+
             self.last_block = crop_index
             self.cnt_added_lots[self.last_time] = len(self.last_new_lots)
             self.cnt_rockets[self.last_time] = len(self.last_rockets)
 
-    # def count_rockets(self) -> int:
-    #     if self.prev_lots and self.new_lots:
-    #         self.last_rockets = []
-    #         nl = [i['id'] for i in self.new_lots]
-    #         pl = [i['id'] for i in self.prev_lots]
-    #         if self.last_new_lots:
-    #             nl = nl[len(self.last_new_lots):]
-    #         for n, lot in enumerate(nl, len(self.last_new_lots)):
-    #             if lot in pl and pl.index(lot) > n + len(self.last_rockets):
-    #                 self.last_rockets.append(lot)
-    #         self.cnt_rockets[self.last_time] = len(self.last_rockets)
-
-    def count_sold_lots(self) -> int:
+    def count_sold_lots(self) -> list:
         if self.prev_lots and self.new_lots:
             self.last_sold_lots = []
             nl = [i['id'] for i in self.new_lots]
@@ -113,14 +97,31 @@ class Volume2():
                     self.last_sold_lots.append(lot)
             self.cnt_sold_lots[self.last_time] = len(self.last_sold_lots)
 
+    def count_anomaly_lots(self) -> list:
+        if self.prev_lots and self.new_lots:
+            # Определяем аномальные лоты
+            nl = [i['id'] for i in self.new_lots]
+            pl = [i['id'] for i in self.prev_lots]
+            if self.last_sold_lots:
+                nl = nl[:-len(self.last_sold_lots)]
+            for a in nl[self.last_block:]:
+                if a not in pl:
+                    self.last_anomaly_lots.append(a)
+            self.cnt_anomaly_lots[self.last_time] = len(self.last_anomaly_lots)
+
     def __repr__(self):
+        if self.wide_view:
+            comp_table = self.create_table_compare()
+        else:
+            comp_table = ''
         header = ('Vol:' + str(self.volume), 'Diff', '10 min', '1 hour', '1 day')
-        lines = [('New Lots',self.last_new_lots, self.get_sum_new_lots(timedelta(minutes=10)), self.get_sum_new_lots(timedelta(minutes=60)), self.get_sum_new_lots(timedelta(days=1))),
-                 ('Sold Lots', self.last_sold_lots, self.get_sum_sold_lots(timedelta(minutes=10)), self.get_sum_sold_lots(timedelta(minutes=60)), self.get_sum_sold_lots(timedelta(days=1))),
-                 ('Rockets', self.last_rockets, self.get_sum_rockets(timedelta(minutes=10)), self.get_sum_rockets(timedelta(minutes=60)), self.get_sum_rockets(timedelta(days=1))),
+        lines = [('New Lots', len(self.last_new_lots), self.get_sum_new_lots(timedelta(minutes=10)), self.get_sum_new_lots(timedelta(minutes=60)), self.get_sum_new_lots(timedelta(days=1))),
+                 ('Sold Lots', len(self.last_sold_lots), self.get_sum_sold_lots(timedelta(minutes=10)), self.get_sum_sold_lots(timedelta(minutes=60)), self.get_sum_sold_lots(timedelta(days=1))),
+                 ('Rockets', len(self.last_rockets), self.get_sum_rockets(timedelta(minutes=10)), self.get_sum_rockets(timedelta(minutes=60)), self.get_sum_rockets(timedelta(days=1))),
+                 ('Anomaly', len(self.last_anomaly_lots), self.get_sum_anomaly_lots(timedelta(minutes=10)), self.get_sum_anomaly_lots(timedelta(minutes=60)), self.get_sum_anomaly_lots(timedelta(days=1))),
                  ('Coefficient', '---', self.coefficient["ten_min"], self.coefficient["one_hour"], self.coefficient["one_day"])
                  ]
-        return tabulate(lines, headers=header) + '\n'
+        return tabulate(lines, headers=header) + f'\n{comp_table}'
 
     def get_sum_new_lots(self, t: timedelta):
         '''
@@ -143,6 +144,13 @@ class Volume2():
         behind_time = datetime.now() - t
         return sum([i for dt, i in self.cnt_sold_lots.items() if dt >= behind_time])
 
+    def get_sum_anomaly_lots(self, t: timedelta):
+        '''
+        Возвращаем количество аномальных
+        '''
+        behind_time = datetime.now() - t
+        return sum([i for dt, i in self.cnt_anomaly_lots.items() if dt >= behind_time])
+
     def get_coefficient(self):
         '''
         Обновляем коэффициенты на текущем запросе
@@ -154,7 +162,8 @@ class Volume2():
         for delta in deltas:
             lots = self.get_sum_new_lots(deltas[delta])
             rockets = self.get_sum_rockets(deltas[delta])
-            sum_lots_rockets = lots + rockets
+            anomaly = self.get_sum_anomaly_lots(deltas[delta])
+            sum_lots_rockets = lots + rockets + anomaly
             sold = self.get_sum_sold_lots(deltas[delta])
             if sum_lots_rockets:
                 self.coefficient[delta] = round(sold / (lots + rockets), 3)
@@ -171,11 +180,11 @@ class Volume2():
         for dt in [i for i in self.cnt_rockets.keys() if i <= behind_date]:
             del self.cnt_rockets[dt]
 
-    def create_table_compare(self, cut_down=True):
+    def create_table_compare(self, cut_down: bool=True):
         header = ('Number', 'PrevLot', 'Status', 'Number', 'NewLot', 'Status')
         result = []
         rockets = {}
-        c = 1
+        c = 0
         if self.prev_lots:
             nl = [i['id'] for i in self.new_lots]
             pl = [i['id'] for i in self.prev_lots]
@@ -184,10 +193,14 @@ class Volume2():
                 if t[0] in self.last_sold_lots:
                     prev_status = 'Sold'
                 elif t[0] in self.last_rockets:
-                    prev_status = f'Rocket  ({rockets[t[0]]})'
+                    prev_status = f'Rocket'
                 else:
                     prev_status = ''
-                if t[1] in self.last_new_lots:
+                if t[1] in self.last_anomaly_lots: # and t[1] in self.last_new_lots:
+                    new_status = 'New Anomaly'
+                # elif t[1] in self.last_anomaly_lots and t[1] in self.last_rockets:
+                #     new_status = 'Rocket Anomaly'
+                elif t[1] in self.last_new_lots:
                     new_status = 'New'
                 elif t[1] in self.last_rockets:
                     rockets[t[1]] = n
@@ -195,7 +208,7 @@ class Volume2():
                 else:
                     new_status = ''
                 if cut_down:
-                    if prev_status or new_status or c <= 10:
+                    if prev_status or new_status or c <= 20:
                         result.append([n, t[0], prev_status, n, t[1], new_status])
                 else:
                     result.append([n, t[0], prev_status, n, t[1], new_status])

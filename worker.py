@@ -9,7 +9,7 @@ from database import insert_volume, check_db
 # SQLite DB
 DB = 'worker.db'
 # Список какие значения забирать
-WEIGHTS = [3, ]
+WEIGHTS = [19]
         #    , 5, 10, 19, 26]
 # Вкл/Отк отрисовки данных на стандартный вывод
 RENDER = True
@@ -17,10 +17,18 @@ RENDER = True
 RENDER_INTERVAL = 2
 
 
+test_headers = {
+    'Connection': 'keep-alive',
+    # 'Tele2-User-Agent': '"mytele2-app/3.17.0"; "unknown"; "Android/9"; "Build/12998710"',
+    'X-API-Version': '1',
+    'User-Agent': 'okhttp/4.2.0'
+}
+
+
 async def main():
     if RENDER:
         render_last = datetime.now()
-    volumes = [Volume2(i) for i in WEIGHTS]
+    volumes = [Volume2(i, wide_view=True) for i in WEIGHTS]
     while True:
         for v in volumes:
             if v.next_get <= datetime.now():
@@ -31,8 +39,6 @@ async def main():
             render_last = datetime.now()
             for sh_vol in volumes:
                 print(sh_vol)
-                print(sh_vol.create_table_compare())
-
 
 
 if __name__ == '__main__':
