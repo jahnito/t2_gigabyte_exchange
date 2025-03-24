@@ -2,7 +2,7 @@ from classes import Volume2
 import aiosqlite
 import sqlite3
 
-__all__ = ['insert_volume', 'check_db']
+__all__ = ['insert_volume', 'get_volumes', 'check_db']
 
 
 async def insert_volume(db: str, v: Volume2):
@@ -18,6 +18,18 @@ async def insert_volume(db: str, v: Volume2):
             await conn.commit()
     except aiosqlite.Error as e:
         print(e)
+
+
+async def get_volumes(db: str):
+    query = 'SELECT volume FROM volumes'
+    try:
+        async with aiosqlite.connect(db) as conn:
+            cursor = await conn.execute(query)
+            result = await cursor.fetchall()
+        return tuple(i[0] for i in result)
+    except aiosqlite.Error as e:
+        print(e)
+        return None
 
 
 def check_db(db: str):

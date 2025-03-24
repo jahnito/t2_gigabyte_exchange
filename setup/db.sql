@@ -34,3 +34,9 @@ CREATE TABLE IF NOT EXISTS "coefficients" (
 	"one_day"	REAL,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
+
+CREATE TABLE IF NOT EXISTS "volumes" (
+    "id"    INTEGER,
+	"volume" INTEGER UNIQUE,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);

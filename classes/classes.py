@@ -51,16 +51,16 @@ class Volume2():
                 self.prev_lots = self.new_lots
                 self.new_lots = tuple(lot for lot in data['data'])
                 self.last_time = datetime.now()
-                self.count_new_lots()
-                self.count_sold_lots()
-                self.count_anomaly_lots()
+                self._count_new_lots()
+                self._count_sold_lots()
+                self._count_anomaly_lots()
                 self.get_coefficient()
                 self.clear_old_data()
                 self.next_get = self.last_time + timedelta(seconds=(self.timeout), milliseconds=(randint(300, 800)))
         except aiohttp.ClientError as e:
             print(e)
 
-    def count_new_lots(self):
+    def _count_new_lots(self):
         if self.prev_lots and self.new_lots:
             crop_index = 0
             self.last_new_lots = []
@@ -85,7 +85,7 @@ class Volume2():
             self.cnt_added_lots[self.last_time] = len(self.last_new_lots)
             self.cnt_rockets[self.last_time] = len(self.last_rockets)
 
-    def count_sold_lots(self) -> list:
+    def _count_sold_lots(self) -> list:
         if self.prev_lots and self.new_lots:
             self.last_sold_lots = []
             nl = [i['id'] for i in self.new_lots]
@@ -97,7 +97,7 @@ class Volume2():
                     self.last_sold_lots.append(lot)
             self.cnt_sold_lots[self.last_time] = len(self.last_sold_lots)
 
-    def count_anomaly_lots(self) -> list:
+    def _count_anomaly_lots(self) -> list:
         if self.prev_lots and self.new_lots:
             # Определяем аномальные лоты
             nl = [i['id'] for i in self.new_lots]
