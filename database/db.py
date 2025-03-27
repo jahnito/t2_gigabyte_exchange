@@ -43,8 +43,9 @@ async def insert_volume_pg(dsn, v: Volume2):
     queries = []
     queries.append(f'SET TIMEZONE="Asia/Yekaterinburg";INSERT INTO lots (volume, dtime, cnt, region) VALUES ({v.volume}, NOW(), {len(v.last_new_lots)}, \'{v.region}\');')
     queries.append(f'SET TIMEZONE="Asia/Yekaterinburg";INSERT INTO rockets (volume, dtime, cnt, region) VALUES ({v.volume}, NOW(), {len(v.last_rockets)}, \'{v.region}\');')
-    queries.append(f'SET TIMEZONE="Asia/Yekaterinburg";INSERT INTO rockets (volume, dtime, cnt, region) VALUES ({v.volume}, NOW(), {len(v.last_anomaly_lots)}, \'{v.region}\');')
-    queries.append(f'SET TIMEZONE="Asia/Yekaterinburg";INSERT INTO sold (volume, dtime, cnt, region) VALUES ({v.volume}, NOW(), {len(v.last_sold_lots)}, \'{v.region}\');')
+    queries.append(f'SET TIMEZONE="Asia/Yekaterinburg";INSERT INTO anomaly (volume, dtime, cnt, region) VALUES ({v.volume}, NOW(), {len(v.last_anomaly_lots)}, \'{v.region}\');')
+    queries.append(f'SET TIMEZONE="Asia/Yekaterinburg";INSERT INTO sold (volume, dtime, cnt, region) VALUES ({v.volume}, NOW(), {len(v.last_anomaly_lots)}, \'{v.region}\');')
+    queries.append(f'SET TIMEZONE="Asia/Yekaterinburg";INSERT INTO coefficients (volume, dtime, ten_min, one_hour, one_day) VALUES ({v.volume}, NOW(), {v.coefficient["ten_min"]}, {v.coefficient["one_hour"]}, {v.coefficient["one_day"]});')
     pool = await aiopg.create_pool(dsn)
     try:
         async with pool.acquire() as conn:
