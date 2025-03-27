@@ -16,7 +16,7 @@ DB_NAME = os.environ.get('PG_DBNAME')
 # DSN = f'dbname=worker user=postgres password=P@sSw0rd host=192.168.3.80'
 DSN = f'dbname={DB_NAME} user={DB_USER} password={DB_PASSWORD} host={DB_HOST}'
 # Вкл/Отк отрисовки данных на стандартный вывод
-RENDER = True
+RENDER = os.environ.get('RENDER', False)
 # Интервал перерисовки данных
 RENDER_INTERVAL = 2
 
