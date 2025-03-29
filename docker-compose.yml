@@ -1,18 +1,16 @@
-version: '3.9'
+# version: '3.9'
 
 services:
   postgres:
     image: postgres:17.4-bookworm
-    container_name: pg_container
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: P@$sw0rd
-      POSTGRES_DB: postgres_db
+      POSTGRES_USER: worker
+      POSTGRES_PASSWORD: P@Ssw0rd
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5430:5432"
+      - "5432:5432"
     volumes:
-      - ./pgdata:/var/lib/postgresql/data/pgdata
+      - pgdata:/var/lib/postgresql/data/pgdata
     deploy:
       resources:
         limits:
@@ -44,6 +42,19 @@ services:
     restart: always
     ports:
       - 8080:8080
+  
+  worker:
+    image: worker:0.1
+    environment:
+      - PG_USER=worker
+      - PG_PASSWD=P@Ssw0rd
+      - PG_HOST=postgres
+      - PG_DBNAME=worker
+      - RENDER=False
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    restart: always
 
 volumes:
   pgdata:
