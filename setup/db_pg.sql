@@ -34,15 +34,15 @@ CREATE TABLE IF NOT EXISTS "public"."sold" (
     "region" text NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS "public"."coefficients" (
-    "id" serial NOT NULL,
-    PRIMARY KEY ("id"),
-    "volume" integer NOT NULL,
-    "dtime" timestamp NOT NULL,
-	"ten_min" REAL NOT NULL,
-	"one_hour" REAL NOT NULL,
-	"one_day" REAL NOT NULL
-);
+-- CREATE TABLE IF NOT EXISTS "public"."coefficients" (
+--     "id" serial NOT NULL,
+--     PRIMARY KEY ("id"),
+--     "volume" integer NOT NULL,
+--     "dtime" timestamp NOT NULL,
+-- 	"ten_min" REAL NOT NULL,
+-- 	"one_hour" REAL NOT NULL,
+-- 	"one_day" REAL NOT NULL
+-- );
 
 
 CREATE TABLE IF NOT EXISTS "public"."volumes" (

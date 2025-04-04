@@ -46,6 +46,7 @@ services:
   worker:
     image: worker:0.1
     environment:
+      - TERM=xterm
       - PG_USER=worker
       - PG_PASSWD=P@Ssw0rd
       - PG_HOST=postgres
