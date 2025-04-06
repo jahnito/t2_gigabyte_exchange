@@ -44,14 +44,13 @@ services:
       - 8080:8080
   
   worker:
-    image: worker:0.1
+    image: worker:0.2
     environment:
       - TERM=xterm
       - PG_USER=worker
       - PG_PASSWD=P@Ssw0rd
       - PG_HOST=postgres
       - PG_DBNAME=worker
-      - RENDER=False
     build:
       context: .
       dockerfile: ./Dockerfile
