@@ -10,7 +10,7 @@ class Volume2():
     Class for aiohttp
     '''
     def __init__(self, volume: int, price: int = 15,
-                 offset: int = 0, limit:int = 150,
+                 offset: int = 0, limit:int = 50,
                  timeout: int = 2, region: str = 'perm',
                  url: str = '.t2.ru/api/exchange/lots?',
                  headers={'User-agent': 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)'},
