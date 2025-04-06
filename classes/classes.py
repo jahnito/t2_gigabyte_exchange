@@ -14,7 +14,9 @@ class Volume2():
                  timeout: int = 2, region: str = 'perm',
                  url: str = '.t2.ru/api/exchange/lots?',
                  headers={'User-agent': 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)'},
-                 wide_view: bool = False):
+                 wide_view: bool = False,
+                 render: bool = False
+                 ):
         self.volume = volume
         self.region = region
         self.url = f'https://{region}{url}'
@@ -40,6 +42,7 @@ class Volume2():
         self.new_lots: list = None
         self.prev_lots: list = None
         self.coefficient: dict = {'ten_min': 0, 'one_hour': 0, 'one_day': 0}
+        self.render = render
 
     async def get_volume(self):
         try:
@@ -54,7 +57,8 @@ class Volume2():
                 self._count_new_lots()
                 self._count_sold_lots()
                 self._count_anomaly_lots()
-                self.get_coefficient()
+                if self.render:
+                    self.get_coefficient()
                 self.clear_old_data()
                 self.next_get = self.last_time + timedelta(seconds=(self.timeout), milliseconds=(randint(300, 800)))
         except aiohttp.ClientError as e:
@@ -71,7 +75,6 @@ class Volume2():
             for i in pl:
                 if i in nl:
                     crop_index = nl.index(i)
-                    # pl = pl[:-crop_index]
                     break
 
             if crop_index:
@@ -82,8 +85,9 @@ class Volume2():
                         self.last_rockets.append(n)
 
             self.last_block = crop_index
-            self.cnt_added_lots[self.last_time] = len(self.last_new_lots)
-            self.cnt_rockets[self.last_time] = len(self.last_rockets)
+            if self.render:
+                self.cnt_added_lots[self.last_time] = len(self.last_new_lots)
+                self.cnt_rockets[self.last_time] = len(self.last_rockets)
 
     def _count_sold_lots(self) -> list:
         if self.prev_lots and self.new_lots:
@@ -95,7 +99,8 @@ class Volume2():
             for lot in pl:
                 if lot not in nl[self.last_block:] and lot not in self.last_rockets:
                     self.last_sold_lots.append(lot)
-            self.cnt_sold_lots[self.last_time] = len(self.last_sold_lots)
+            if self.render:
+                self.cnt_sold_lots[self.last_time] = len(self.last_sold_lots)
 
     def _count_anomaly_lots(self) -> list:
         if self.prev_lots and self.new_lots:
@@ -107,7 +112,8 @@ class Volume2():
             for a in nl[self.last_block:]:
                 if a not in pl:
                     self.last_anomaly_lots.append(a)
-            self.cnt_anomaly_lots[self.last_time] = len(self.last_anomaly_lots)
+            if self.render:
+                self.cnt_anomaly_lots[self.last_time] = len(self.last_anomaly_lots)
 
     def __repr__(self):
         if self.wide_view:
