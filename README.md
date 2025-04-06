@@ -2,20 +2,18 @@
 
 Воркер для сбора статистики по продаваемым и перемещаемым лотам на бирже Tele2
 
-Для запуска БД
+docker-compose собирает контейнер с воркером, запускает БД Postgres и adminer для доступа к БД на порту 8080
+
+(Переменные окружения с кредами для БД вшиты в docker-compose.yml)
+
+Запуск воркера
 
 ```shell
 docker compose up -d
 ```
 
-Сборка контейнера c воркером
+Остановка воркера
 
 ```shell
-docker build -t worker:0.1 .
-```
-
-Для запуска контейнера необходимо передача переменных окружения
-
-```shell
-docker run --rm -e PG_USER=postgres -e PG_PASSWD=P@sSw0rd -e PG_HOST=192.168.3.80 -e PG_DBNAME=worker worker:0.1
+docker compose down
 ```
