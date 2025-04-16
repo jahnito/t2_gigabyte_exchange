@@ -10,7 +10,8 @@ class Volume2():
     Class for aiohttp
     '''
     def __init__(self, volume: int, price: int = 15,
-                 offset: int = 0, limit:int = 50,
+                 offset: int = 0, limit: int = 500,
+                 limit_sold: int = 30,
                  timeout: int = 2, region: str = 'perm',
                  url: str = '.t2.ru/api/exchange/lots?',
                  headers={'User-agent': 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)'},
@@ -25,6 +26,7 @@ class Volume2():
                        'cost': volume * price,
                        'offset': offset,
                        'limit': limit}
+        self.limit_sold = limit_sold
         self.headers: dict = headers
         self.timeout = timeout
         self.wide_view = wide_view
@@ -92,8 +94,8 @@ class Volume2():
     def _count_sold_lots(self) -> list:
         if self.prev_lots and self.new_lots:
             self.last_sold_lots = []
-            nl = [i['id'] for i in self.new_lots]
-            pl = [i['id'] for i in self.prev_lots]
+            nl = [i['id'] for i in self.new_lots[:self.limit_sold]]
+            pl = [i['id'] for i in self.prev_lots[:self.limit_sold]]
             if self.last_block:
                 pl = pl[:-self.last_block]
             for lot in pl:
