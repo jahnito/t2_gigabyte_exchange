@@ -26,7 +26,7 @@ class Volume2():
                        'cost': volume * price,
                        'offset': offset,
                        'limit': limit}
-        self.limit_sold = limit_sold
+        self.limit_sold = limit_sold        # Глубина подсчета проданных лотов
         self.headers: dict = headers
         self.timeout = timeout
         self.wide_view = wide_view
@@ -174,9 +174,11 @@ class Volume2():
             sum_lots_rockets = lots + rockets + anomaly
             sold = self.get_sum_sold_lots(deltas[delta])
             if sum_lots_rockets:
-                self.coefficient[delta] = round(sold / (lots + rockets), 3)
+                self.coefficient[delta] = round(sold / sum_lots_rockets, 3)
             elif sold > 0 and sum_lots_rockets == 0:
                 self.coefficient[delta] = sold
+            else:
+                self.coefficient[delta] = 0
 
     def clear_old_data(self):
         '''

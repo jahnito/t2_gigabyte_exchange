@@ -1,9 +1,8 @@
 from classes import Volume2
 import aiosqlite
 import sqlite3
-import asyncio
 import aiopg
-import random
+
 
 __all__ = [
     'insert_volume_sqlite', 'get_volumes_sqlite', 'check_db_sqlite',
@@ -45,6 +44,10 @@ async def insert_volume_pg(dsn, v: Volume2):
     queries.append(f'INSERT INTO rockets (volume, dtime, cnt, region) VALUES ({v.volume}, NOW(), {len(v.last_rockets)}, \'{v.region}\');')
     queries.append(f'INSERT INTO anomaly (volume, dtime, cnt, region) VALUES ({v.volume}, NOW(), {len(v.last_anomaly_lots)}, \'{v.region}\');')
     queries.append(f'INSERT INTO sold (volume, dtime, cnt, region) VALUES ({v.volume}, NOW(), {len(v.last_sold_lots)}, \'{v.region}\');')
+    # queries.append('DELETE FROM anomaly WHERE dtime < NOW() - INTERVAL \'60 minutes\';')
+    # queries.append('DELETE FROM lots WHERE dtime < NOW() - INTERVAL \'60 minutes\';')
+    # queries.append('DELETE FROM rockets WHERE dtime < NOW() - INTERVAL \'60 minutes\';')
+    # queries.append('DELETE FROM sold WHERE dtime < NOW() - INTERVAL \'60 minutes\';')
     pool = await aiopg.create_pool(dsn)
     try:
         async with pool.acquire() as conn:
@@ -92,13 +95,3 @@ def check_db_sqlite(db: str):
             conn.commit()
     except sqlite3.Error as e:
         print(e)
-
-
-# async def main(dsn):
-#     for i in range(100):
-#         await get_volume_pg(dsn, i, 4, 'perm')
-
-
-# if __name__ == '__main__':
-#     dsn = 'dbname=worker user=postgres password=P@sSw0rd host=192.168.3.80'
-#     asyncio.run(main(dsn))
