@@ -1,9 +1,9 @@
 from classes import Volume2
 import os
 import asyncio
-from time import sleep
+from time import sleep, gmtime
 from datetime import datetime, timedelta
-from database import get_volumes_pg, check_db_pg, insert_volume_pg
+from database import get_volumes_pg, check_db_pg, insert_volume_pg, clean_data
 
 
 # Postgres DSN
@@ -16,7 +16,9 @@ DSN = f'dbname={DB_NAME} user={DB_USER} password={DB_PASSWORD} host={DB_HOST}'
 # Вкл/Отк отрисовки данных на стандартный вывод
 RENDER = os.environ.get('RENDER', False)
 # Интервал перерисовки данных
-RENDER_INTERVAL = 2
+RENDER_INTERVAL = 30
+# Последняя очистка БД
+CLRTIME = 0
 
 
 def check_env(user, passw, host, name):
@@ -57,6 +59,14 @@ async def volumes_manage(dsn:str, volumes: list[Volume2], render: bool):
     return res
 
 
+async def cleaning_db(dsn: str):
+    global CLRTIME
+    if CLRTIME != gmtime().tm_hour:
+        print(f'Очистка данных {gmtime().tm_hour}:{gmtime().tm_min}')
+        CLRTIME = gmtime().tm_hour
+        await clean_data(dsn, 1)
+
+
 async def main():
     if RENDER:
         render_last = datetime.now()
@@ -68,6 +78,7 @@ async def main():
                 if v.next_get <= datetime.now():
                     await v.get_volume()
                     await insert_volume_pg(DSN, v)
+            await cleaning_db(DSN)
             if RENDER and render_last < datetime.now() - timedelta(seconds=RENDER_INTERVAL):
                 os.system('clear')
                 render_last = datetime.now()            

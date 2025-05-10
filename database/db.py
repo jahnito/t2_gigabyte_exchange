@@ -6,7 +6,7 @@ import aiopg
 
 __all__ = [
     'insert_volume_sqlite', 'get_volumes_sqlite', 'check_db_sqlite',
-    'get_volumes_pg', 'check_db_pg', 'insert_volume_pg'
+    'get_volumes_pg', 'check_db_pg', 'insert_volume_pg', 'clean_data'
     ]
 
 
@@ -59,6 +59,19 @@ async def insert_volume_pg(dsn, v: Volume2):
         print(e)
 
 
+async def clean_data(dsn: str, interval: int):
+    pool = await aiopg.create_pool(dsn)
+    tables = ['lots', 'anomaly', 'rockets', 'sold']
+    try:
+        async with pool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                for tbl in tables:
+                    await cursor.execute(f"DELETE FROM {tbl} WHERE dtime < NOW() - INTERVAL '{interval} hours'")
+            await conn.close()
+    except Exception as e:
+        print(e)
+
+
 async def get_volumes_sqlite(db: str):
     query = 'SELECT volume FROM volumes'
     try:
@@ -95,3 +108,5 @@ def check_db_sqlite(db: str):
             conn.commit()
     except sqlite3.Error as e:
         print(e)
+
+

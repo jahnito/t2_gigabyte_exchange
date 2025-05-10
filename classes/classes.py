@@ -4,7 +4,6 @@ from tabulate import tabulate
 from random import randint
 
 
-
 class Volume2():
     '''
     Class for aiohttp
