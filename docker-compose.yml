@@ -44,7 +44,7 @@ services:
       - 8080:8080
   
   worker:
-    image: worker:0.4
+    image: worker:0.5
     environment:
       - TERM=xterm
       - PG_USER=worker
