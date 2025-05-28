@@ -2,6 +2,7 @@ import aiohttp
 from datetime import datetime, timedelta
 from tabulate import tabulate
 from random import randint
+import json
 
 
 class Volume2():
@@ -50,7 +51,8 @@ class Volume2():
             async with aiohttp.ClientSession(headers=self.headers) as session:
                 async with session.get(self.url, params=self.params) as resp:
                     status = resp.status
-                    data = await resp.json()
+                    r = await resp.read()
+                    data = json.loads(r)
             if status == 200 and data:
                 self.prev_lots = self.new_lots
                 self.new_lots = tuple(lot for lot in data['data'])
