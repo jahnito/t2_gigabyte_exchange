@@ -12,7 +12,7 @@ class Volume2():
     def __init__(self, volume: int, price: int = 15,
                  offset: int = 0, limit: int = 500,
                  limit_sold: int = 30,
-                 timeout: int = 2, region: str = 'perm',
+                 timeout: int = 10, region: str = 'perm',
                  url: str = '.t2.ru/api/exchange/lots?',
                  headers={'User-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0'},
                  wide_view: bool = False,
