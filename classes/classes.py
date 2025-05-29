@@ -14,7 +14,7 @@ class Volume2():
                  limit_sold: int = 30,
                  timeout: int = 2, region: str = 'perm',
                  url: str = '.t2.ru/api/exchange/lots?',
-                 headers={'User-agent': 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)'},
+                 headers={'User-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0'},
                  wide_view: bool = False,
                  render: bool = False
                  ):
@@ -64,7 +64,7 @@ class Volume2():
                     self.get_coefficient()
                 self.clear_old_data()
                 self.next_get = self.last_time + timedelta(seconds=(self.timeout), milliseconds=(randint(300, 800)))
-        except aiohttp.ClientError as e:
+        except (aiohttp.ClientError, json.JSONDecodeError) as e:
             print(e)
 
     def _count_new_lots(self):
