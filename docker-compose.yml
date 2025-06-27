@@ -41,12 +41,16 @@ services:
 
   adminer:
     image: adminer:5.0.6-standalone
+    networks:
+      - t2-network
     restart: always
     ports:
-      - 8080:8080
+      - 172.31.255.1:8080:8080
   
   worker:
     image: worker:0.5
+    networks:
+      - t2-network
     environment:
       - TERM=xterm
       - PG_USER=worker
