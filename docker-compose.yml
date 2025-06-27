@@ -3,6 +3,8 @@
 services:
   postgres:
     image: postgres:17.4-bookworm
+    networks:
+      - t2-network
     environment:
       POSTGRES_USER: worker
       POSTGRES_PASSWORD: P@Ssw0rd
@@ -59,3 +61,6 @@ services:
 volumes:
   pgdata:
     driver: local
+
+networks:
+  t2-network:
